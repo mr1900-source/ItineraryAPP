@@ -1,0 +1,7 @@
+Flask>=2.0
+
+python-dotenv>=0.20
+
+google-genai
+
+pytest>=7.0
