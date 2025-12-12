@@ -15,11 +15,11 @@ def test_generate_itinerary_success(monkeypatch):
     user_prompt = 'date night 6-9pm in downtown Manhattan, Italian, $60pp'
 
 
-    def fake_call(messages):
+    def fake_call(api_params):
         # Return a fake itinerary string
         return '6:00 PM - Arrive; 6:30 PM - Dinner at Trattoria (approx $50pp)'
 
-    monkeypatch.setattr(itinerary, '_call_openai_chat', fake_call)
+    monkeypatch.setattr(itinerary, '_call_gemini_api', fake_call)
 
     result = itinerary.generate_itinerary(user_prompt)
     assert '6:00 PM' in result or 'dinner' in result.lower()
