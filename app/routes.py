@@ -37,6 +37,20 @@ def plan():
     return render_template('index.html', prompt=prompt, itinerary=itinerary_text)
 
 
+@main_bp.route('/modify', methods=['POST'])
+def modify():
+    """Display modified itinerary after user edits."""
+    prompt = request.form.get('prompt', '').strip()
+    modified_itinerary = request.form.get('modified_itinerary', '').strip()
+    
+    if not modified_itinerary:
+        flash('No itinerary content to modify.', 'warning')
+        return redirect(url_for('main.index'))
+    
+    flash('Itinerary modified! You can save it below.', 'success')
+    return render_template('index.html', prompt=prompt, itinerary=modified_itinerary)
+
+
 @main_bp.route('/save', methods=['POST'])
 def save():
     """Save a generated itinerary."""

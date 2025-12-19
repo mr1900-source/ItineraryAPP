@@ -1,76 +1,111 @@
 {% extends "bootstrap_5_layout.html" %}
-{% block content %}
-    <div class="text-center mb-4">
-        <h1 class="display-5 fw-bold"><i class="bi bi-airplane-fill text-primary"></i> TripCraft</h1>
-    </div>
+{% set active_page = "home" %}
 
-    <div class="card shadow-sm mb-4 border-0">
-        <div class="card-body bg-light rounded">
+{% block content %}
+    <h1><i class="bi bi-map"></i> QuickTrip - AI Itinerary Planner</h1>
+    <p class="lead">Describe your travel plans and let AI create a detailed itinerary for you.</p>
+
+    <hr>
+
+    <!-- Generation Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3>Create Your Itinerary</h3>
             <form action="{{ url_for('main.plan') }}" method="post">
                 <div class="mb-3">
-                    <label class="fw-bold mb-2">Where do you want to go?</label>
-                    <textarea name="prompt" class="form-control" rows="3" placeholder="e.g. 3 days in Tokyo focusing on sushi and tech...">{{ prompt if prompt }}</textarea>
+                    <label for="prompt" class="form-label">Describe Your Trip:</label>
+                    <textarea 
+                        id="prompt" 
+                        name="prompt" 
+                        class="form-control" 
+                        rows="5" 
+                        placeholder="Example: A 3-day weekend in Paris for two people, budget $500, interested in museums, cafes, and outdoor activities..."
+                        required>{% if prompt %}{{ prompt }}{% endif %}</textarea>
+                    <small class="form-text text-muted">
+                        Include: destination, duration, budget, and interests
+                    </small>
                 </div>
-                <button type="submit" class="btn btn-primary px-4">Generate Itinerary</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-magic"></i> Generate Itinerary
+                </button>
             </form>
         </div>
     </div>
 
+    <!-- Generated Itinerary Display -->
     {% if itinerary %}
-    <div id="itinerary-display">
-        
-        {# We split the text into parts #}
-        {% set raw_parts = itinerary.split('STOP:') %}
-        {% set overview = raw_parts[0].replace('OVERVIEW:', '').strip() %}
-
-        <div class="card shadow-sm mb-4 border-0">
-            <div class="card-body bg-light rounded">
-                <h5 class="fw-bold text-primary">Overview</h5>
-                <p class="mb-0">{{ overview }}</p>
-            </div>
-        </div>
-
-        <div id="activities-container">
-            {% for segment in raw_parts[1:] %}
-                {# Handle the TIPS section if it's at the end of the last segment #}
-                {% set clean_segment = segment.split('TIPS:')[0].strip() %}
-                {% set parts = clean_segment.split('|') %}
-                
-                <div class="card shadow-sm mb-3 border-0 activity-card">
-                    <div class="card-body bg-light rounded d-flex align-items-center">
-                        <div class="d-flex flex-column me-3">
-                            <button type="button" class="btn btn-sm btn-link p-0" onclick="moveUp(this)"><i class="bi bi-chevron-up fs-5"></i></button>
-                            <button type="button" class="btn btn-sm btn-link p-0" onclick="moveDown(this)"><i class="bi bi-chevron-down fs-5"></i></button>
-                        </div>
-                        
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between border-bottom pb-1 mb-2">
-                                <span class="fw-bold text-primary" contenteditable="true">
-                                    {{ parts[0].strip() if parts[0] else "Activity" }}
-                                </span>
-                                <span class="text-muted small" contenteditable="true">Set Time...</span>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-calendar-check"></i> Your Itinerary</h3>
+            
+            <div id="activities-container">
+                {% set sections = itinerary.split('STOP:') %}
+                {% for item in sections if item.strip() %}
+                    {% if 'EXTRA TIPS' in item.upper() %}
+                        <!-- Extra Tips Card (No Arrows) -->
+                        <div class="card shadow-sm mb-3 extra-tips-card">
+                            <div class="card-body rounded">
+                                <h5><i class="bi bi-lightbulb-fill"></i> Extra Tips</h5>
+                                <div style="color: white; line-height: 1.8;">
+                                    {{ item.replace('EXTRA TIPS', '').replace('Extra Tips', '').strip() | replace('\n', '<br>') | safe }}
+                                </div>
                             </div>
-                            <p class="mb-0" contenteditable="true">
-                                {{ parts[1].strip() if parts|length > 1 else "Add details..." }}
-                            </p>
                         </div>
-                    </div>
+                    {% else %}
+                        <!-- Regular Stop Card (With Arrows) -->
+                        <div class="card shadow-sm mb-3 border-0 activity-card">
+                            <div class="card-body bg-light rounded d-flex align-items-start">
+                                <div class="d-flex flex-column me-3" style="margin-top: 5px;">
+                                    <button type="button" class="btn btn-sm btn-link p-0 text-primary" onclick="moveUp(this)" title="Move up">
+                                        <i class="bi bi-chevron-up fs-5"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-link p-0 text-primary" onclick="moveDown(this)" title="Move down">
+                                        <i class="bi bi-chevron-down fs-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex-grow-1 editable-content" contenteditable="true">
+                                    {{ item.strip() | replace('\n', '<br>') | safe }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <hr>
+            
+            <!-- Action Buttons -->
+            <div class="mb-3">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> Create New Itinerary
+                </a>
+            </div>
+            
+            <!-- Save Form -->
+            <div class="card shadow-sm border-0 border-top border-primary border-4">
+                <div class="card-body bg-light rounded">
+                    <h4>Save This Itinerary</h4>
+                    <form action="{{ url_for('main.save') }}" method="post" onsubmit="prepareSave()">
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <input 
+                                    type="text" 
+                                    name="title" 
+                                    class="form-control" 
+                                    placeholder="Give your itinerary a title (e.g., 'Paris Weekend')" 
+                                    required>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-save"></i> Save Itinerary
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="prompt" value="{{ prompt }}">
+                        <input type="hidden" name="itinerary" id="save_input">
+                    </form>
                 </div>
-            {% endfor %}
-        </div>
-
-        <div class="card shadow-sm mt-4 border-0 border-top border-success border-4">
-            <div class="card-body bg-light rounded">
-                <h5 class="fw-bold mb-3">Save This Trip</h5>
-                <form action="{{ url_for('main.save') }}" method="post" onsubmit="prepareSave()">
-                    <div class="mb-3">
-                        <label class="small fw-bold">Trip Name:</label>
-                        <input type="text" name="title" class="form-control" placeholder="e.g. My Tokyo Adventure" required>
-                    </div>
-                    <input type="hidden" name="prompt" value="{{ prompt }}">
-                    <input type="hidden" name="itinerary" id="save_input">
-                    <button type="submit" class="btn btn-success w-100">Save Itinerary</button>
-                </form>
             </div>
         </div>
     </div>
@@ -85,19 +120,33 @@
 
         function moveDown(btn) {
             const card = btn.closest('.activity-card');
-            if (card.nextElementSibling && card.nextElementSibling.classList.contains('activity-card')) {
-                card.parentNode.insertBefore(card.nextElementSibling, card);
+            if (card.nextElementSibling) {
+                const nextCard = card.nextElementSibling;
+                if (nextCard.classList.contains('activity-card')) {
+                    card.parentNode.insertBefore(nextCard, card);
+                }
             }
         }
 
         function prepareSave() {
             let result = "";
             document.querySelectorAll('.activity-card').forEach(card => {
-                const text = card.innerText.replace(/\n/g, ' ').trim();
-                result += "STOP: " + text + "\n\n";
+                const content = card.querySelector('.editable-content').innerText.trim();
+                if (content) {
+                    result += "STOP: " + content + "\n\n";
+                }
             });
+            // Also include extra tips if present
+            const extraTips = document.querySelector('.extra-tips-card');
+            if (extraTips) {
+                const tipsContent = extraTips.querySelector('.card-body div').innerText.trim();
+                if (tipsContent) {
+                    result += "STOP: EXTRA TIPS\n" + tipsContent + "\n\n";
+                }
+            }
             document.getElementById('save_input').value = result;
         }
     </script>
     {% endif %}
+
 {% endblock %}
