@@ -1,71 +1,103 @@
 {% extends "bootstrap_5_layout.html" %}
-{% set active_page = "home" %}
-
 {% block content %}
-    <h1>TripCraft - AI Itinerary Planner</h1>
-    <p class="lead">Describe your travel plans and let AI create a detailed itinerary for you.</p>
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-bold"><i class="bi bi-airplane-fill text-primary"></i> TripCraft</h1>
+    </div>
 
-    <hr>
-
-    <!-- Generation Form -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3>Create Your Itinerary</h3>
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body bg-light rounded">
             <form action="{{ url_for('main.plan') }}" method="post">
                 <div class="mb-3">
-                    <label for="prompt" class="form-label">Describe Your Trip:</label>
-                    <textarea 
-                        id="prompt" 
-                        name="prompt" 
-                        class="form-control" 
-                        rows="5" 
-                        placeholder="Example: A 3-day weekend in Paris for two people, budget $500, interested in museums and cafes..."
-                        required>{% if prompt %}{{ prompt }}{% endif %}</textarea>
-                    <small class="form-text text-muted">
-                        Include: destination, duration, budget, and interests
-                    </small>
+                    <label class="fw-bold mb-2">Where do you want to go?</label>
+                    <textarea name="prompt" class="form-control" rows="3" placeholder="e.g. 3 days in Tokyo focusing on sushi and tech...">{{ prompt if prompt }}</textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-magic"></i> Generate Itinerary
-                </button>
+                <button type="submit" class="btn btn-primary px-4">Generate Itinerary</button>
             </form>
         </div>
     </div>
 
-    <!-- Generated Itinerary Display -->
     {% if itinerary %}
-    <div class="card">
-        <div class="card-body">
-            <h3>Your Itinerary</h3>
-            <pre style="white-space: pre-wrap; font-family: inherit;">{{ itinerary }}</pre>
-            
-            <hr>
-            
-            <!-- Save Form -->
-            <h4>Save This Itinerary</h4>
-            <form action="{{ url_for('main.save') }}" method="post" class="row g-3">
-                <div class="col-md-8">
-                    <input 
-                        type="text" 
-                        name="title" 
-                        class="form-control" 
-                        placeholder="Give your itinerary a title (e.g., 'Paris Weekend')" 
-                        required>
+    <div id="itinerary-display">
+        
+        {# We split the text into parts #}
+        {% set raw_parts = itinerary.split('STOP:') %}
+        {% set overview = raw_parts[0].replace('OVERVIEW:', '').strip() %}
+
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-body bg-light rounded">
+                <h5 class="fw-bold text-primary">Overview</h5>
+                <p class="mb-0">{{ overview }}</p>
+            </div>
+        </div>
+
+        <div id="activities-container">
+            {% for segment in raw_parts[1:] %}
+                {# Handle the TIPS section if it's at the end of the last segment #}
+                {% set clean_segment = segment.split('TIPS:')[0].strip() %}
+                {% set parts = clean_segment.split('|') %}
+                
+                <div class="card shadow-sm mb-3 border-0 activity-card">
+                    <div class="card-body bg-light rounded d-flex align-items-center">
+                        <div class="d-flex flex-column me-3">
+                            <button type="button" class="btn btn-sm btn-link p-0" onclick="moveUp(this)"><i class="bi bi-chevron-up fs-5"></i></button>
+                            <button type="button" class="btn btn-sm btn-link p-0" onclick="moveDown(this)"><i class="bi bi-chevron-down fs-5"></i></button>
+                        </div>
+                        
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between border-bottom pb-1 mb-2">
+                                <span class="fw-bold text-primary" contenteditable="true">
+                                    {{ parts[0].strip() if parts[0] else "Activity" }}
+                                </span>
+                                <span class="text-muted small" contenteditable="true">Set Time...</span>
+                            </div>
+                            <p class="mb-0" contenteditable="true">
+                                {{ parts[1].strip() if parts|length > 1 else "Add details..." }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-save"></i> Save Itinerary
-                    </button>
-                </div>
-                <input type="hidden" name="prompt" value="{{ prompt }}">
-                <input type="hidden" name="itinerary" value="{{ itinerary }}">
-            </form>
-            
-            <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">
-                <i class="bi bi-arrow-clockwise"></i> Create New Itinerary
-            </a>
+            {% endfor %}
+        </div>
+
+        <div class="card shadow-sm mt-4 border-0 border-top border-success border-4">
+            <div class="card-body bg-light rounded">
+                <h5 class="fw-bold mb-3">Save This Trip</h5>
+                <form action="{{ url_for('main.save') }}" method="post" onsubmit="prepareSave()">
+                    <div class="mb-3">
+                        <label class="small fw-bold">Trip Name:</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. My Tokyo Adventure" required>
+                    </div>
+                    <input type="hidden" name="prompt" value="{{ prompt }}">
+                    <input type="hidden" name="itinerary" id="save_input">
+                    <button type="submit" class="btn btn-success w-100">Save Itinerary</button>
+                </form>
+            </div>
         </div>
     </div>
-    {% endif %}
 
+    <script>
+        function moveUp(btn) {
+            const card = btn.closest('.activity-card');
+            if (card.previousElementSibling && card.previousElementSibling.classList.contains('activity-card')) {
+                card.parentNode.insertBefore(card, card.previousElementSibling);
+            }
+        }
+
+        function moveDown(btn) {
+            const card = btn.closest('.activity-card');
+            if (card.nextElementSibling && card.nextElementSibling.classList.contains('activity-card')) {
+                card.parentNode.insertBefore(card.nextElementSibling, card);
+            }
+        }
+
+        function prepareSave() {
+            let result = "";
+            document.querySelectorAll('.activity-card').forEach(card => {
+                const text = card.innerText.replace(/\n/g, ' ').trim();
+                result += "STOP: " + text + "\n\n";
+            });
+            document.getElementById('save_input').value = result;
+        }
+    </script>
+    {% endif %}
 {% endblock %}
