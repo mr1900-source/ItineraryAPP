@@ -1,112 +1,83 @@
-"""Functions to interact with the OpenAI API to generate itineraries.
-
+"""Functions to interact with the Gemini API to generate itineraries.
 
 This module loads GEMINI_API_KEY from environment variables (use a .env file
 during development). It exposes `generate_itinerary(prompt: str) -> str`.
-
 
 The real network call is isolated here so tests can mock it.
 """
 import os
 from dotenv import load_dotenv
-
-# --- New/Updated Imports for Gemini API ---
 from google import genai
-from google.genai import types # Import types for configuration objects
+from google.genai import types
 
 load_dotenv()
 
-# Note: The 'google-genai' SDK automatically looks for GEMINI_API_KEY
-# or GOOGLE_API_KEY, so the client creation handles authentication.
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
 
 class ItineraryError(Exception):
+    """Custom exception for itinerary generation errors."""
     pass
 
 
 def _build_messages(user_prompt: str) -> dict:
-    """Return a dictionary to configure the Gemini API call.
-
-    The assistant's guidance is passed as a 'system_instruction' in the
-    configuration, and the user prompt is passed as 'contents'.
-    """
+    """Return a dictionary to configure the Gemini API call."""
     system_instruction = (
-        "You are an assistant that writes concise, well-structured day/evening "
-        "itineraries for a user. When relevant include timing, venue types, "
-        "transport suggestions, and rough costs. Reply in plain text."
+        "You are a creative travel itinerary planner. Create detailed, well-structured itineraries. "
+        "Format your response where EACH activity is a separate STOP. "
+        "Format EXACTLY like this:\n\n"
+        "STOP: 9:00 AM - Activity Name\n"
+        "Description of activity and what to expect.\n"
+        "Cost: $XX | Duration: X hours\n\n"
+        "STOP: 11:30 AM - Next Activity\n"
+        "Description...\n\n"
+        "Each stop should start with 'STOP:' followed by the time and activity name. "
+        "Be creative with activities - include unique experiences like picnics in parks, "
+        "local markets, hidden gems, not just restaurants and museums. "
+        "Vary the types of activities. Don't recommend too many meals - 2-3 per day max. "
+        "At the end, you MAY optionally add ONE final section that starts with 'STOP: EXTRA TIPS' with helpful travel advice. "
+        "Do NOT include a budget summary section or day headers. "
+        "CRITICAL: Every section MUST start with 'STOP:' including the extra tips if you include them."
     )
 
-    user_content = f"Create an itinerary based on: {user_prompt}"
+    user_content = f"Create a detailed itinerary based on: {user_prompt}"
 
-    # Return a dictionary containing the separate prompt components
     return {
         "system_instruction": system_instruction,
         "user_content": user_content,
     }
 
-
 def _call_gemini_api(api_params: dict) -> str:
-    """Call the Gemini API and return the model's text response.
-
-    This function replaces the old _call_openai_chat.
-    """
-
-    # --- Initialization ---
+    """Call the Gemini API and return the model's text response."""
     if not GEMINI_API_KEY:
         raise ItineraryError('GEMINI_API_KEY not set in environment')
 
-    # 1. Instantiate the Client (it automatically uses the environment variable)
     try:
         client = genai.Client()
     except Exception as e:
         raise ItineraryError(f'Error creating Gemini client: {e}') from e
 
-    # 2. Configure the generation parameters
     config = types.GenerateContentConfig(
-        # The 'system' message from the old API becomes a system_instruction
         system_instruction=api_params["system_instruction"],
-        max_output_tokens=2000, # Matches the old max_tokens
-        temperature=0.7,      # Matches the old temperature
+        max_output_tokens=2000,
+        temperature=0.8,  # Increased for more creativity
     )
 
-    # 3. Call the API
     try:
-        # Use models.generate_content for a single, stateless request
         response = client.models.generate_content(
-            model='gemini-2.5-flash', # A fast, capable model (equivalent to gpt-3.5-turbo)
+            model='gemini-2.0-flash-exp',
             contents=api_params["user_content"],
             config=config,
         )
-
-        # The response text is accessed directly
         return response.text.strip()
-
     except Exception as e:
-        # Wrap any lower-level errors in ItineraryError for the caller
         raise ItineraryError(f"Gemini API call failed: {e}") from e
 
 
 def generate_itinerary(user_prompt: str) -> str:
-    """Public function: given a natural-language prompt return itinerary text.
-
-    Raises ItineraryError on problems.
-    """
-
+    """Public function: given a natural-language prompt return itinerary text."""
     if not user_prompt or not user_prompt.strip():
         raise ItineraryError('Empty prompt provided')
 
-
     api_params = _build_messages(user_prompt)
     return _call_gemini_api(api_params)
-
-
-# --- Example Usage ---
-# if __name__ == '__main__':
-#     prompt = "A romantic evening itinerary for two in Paris, starting at 7 PM with a budget of 150 EUR for dinner and transport."
-#     try:
-#         itinerary = generate_itinerary(prompt)
-#         print("--- Generated Itinerary ---")
-#         print(itinerary)
-#     except ItineraryError as e:
-#         print(f"An error occurred: {e}")
