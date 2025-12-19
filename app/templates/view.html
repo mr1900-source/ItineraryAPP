@@ -1,0 +1,43 @@
+{% extends "bootstrap_5_layout.html" %}
+{% set active_page = "saved" %}
+
+{% block content %}
+    <h1>{{ itinerary_data.title }}</h1>
+    <p><small class="text-muted">Created: {{ itinerary_data.created_at[:10] }}</small></p>
+
+    <hr>
+
+    <!-- Original Prompt -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Original Prompt:</h5>
+            <p>{{ itinerary_data.prompt }}</p>
+        </div>
+    </div>
+
+    <!-- Itinerary Content -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Itinerary:</h5>
+            <pre style="white-space: pre-wrap; font-family: inherit;">{{ itinerary_data.itinerary }}</pre>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <a href="{{ url_for('main.saved') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Saved
+    </a>
+    
+    <form action="{{ url_for('main.regenerate', itinerary_id=itinerary_data.id) }}" method="post" class="d-inline">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-arrow-clockwise"></i> Regenerate
+        </button>
+    </form>
+    
+    <form action="{{ url_for('main.delete', itinerary_id=itinerary_data.id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this itinerary?');">
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+    </form>
+
+{% endblock %}

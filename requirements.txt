@@ -1,7 +1,5 @@
 Flask>=2.0
-
 python-dotenv>=0.20
-
-google-genai
-
+google-genai>=1.0.0
 pytest>=7.0
+markupsafe>=2.1.0

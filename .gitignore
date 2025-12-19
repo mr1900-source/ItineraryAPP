@@ -4,13 +4,24 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
 
 # Virtual envs
 venv/
 .env/
+env/
 
 # Editor folders
 .vscode/
+.idea/
 
 # OS
 .DS_Store
+Thumbs.db
+
+# Data storage
+saved_itineraries.json
+
+# Flask
+instance/
+.pytest_cache/
