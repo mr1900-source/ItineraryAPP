@@ -7,7 +7,7 @@
 
     <hr>
 
-    <!-- Generation Form -->
+    <!-- Generation Form, Used Claude Code for Inspiration-->
     <div class="card mb-4">
         <div class="card-body">
             <h3>Create Your Itinerary</h3>
@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <!-- Generated Itinerary Display -->
+    <!-- Generated Itinerary Display, Used Claude Code for Inspiration -->
     {% if itinerary %}
     <div class="card mb-4">
         <div class="card-body">
@@ -75,14 +75,14 @@
             
             <hr>
             
-            <!-- Action Buttons -->
+            <!-- Action Buttons, Used Claude Code for Inspiration -->
             <div class="mb-3">
                 <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
                     <i class="bi bi-arrow-clockwise"></i> Create New Itinerary
                 </a>
             </div>
             
-            <!-- Save Form -->
+            <!-- Save Form, Used Claude Code for Inspiration -->
             <div class="card shadow-sm border-0 border-top border-primary border-4">
                 <div class="card-body bg-light rounded">
                     <h4>Save This Itinerary</h4>
@@ -136,7 +136,6 @@
                     result += "STOP: " + content + "\n\n";
                 }
             });
-            // Also include extra tips if present
             const extraTips = document.querySelector('.extra-tips-card');
             if (extraTips) {
                 const tipsContent = extraTips.querySelector('.card-body div').innerText.trim();

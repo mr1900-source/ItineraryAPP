@@ -1,6 +1,5 @@
-"""Simple JSON-based storage for saved itineraries.
-
-This module provides functions to save, load, and delete itineraries
+"""This file is allows for simple JSON-based storage for saved itineraries.
+The file provides functions to save, load, and delete itineraries
 using a local JSON file for persistence.
 """
 import json
@@ -11,7 +10,7 @@ from typing import List, Dict, Optional
 
 STORAGE_FILE = 'saved_itineraries.json'
 
-
+# Used inspiration from Claude code to work with JSON
 class StorageError(Exception):
     """Custom exception for storage-related errors."""
     pass
@@ -61,7 +60,7 @@ def save_itinerary(title: str, prompt: str, itinerary_text: str) -> Dict:
     """
     data = _load_data()
     
-    # Generate new ID (simple incrementing)
+    # Generate a new ID 
     new_id = max([item.get('id', 0) for item in data], default=0) + 1
     
     new_itinerary = {
@@ -85,7 +84,6 @@ def load_all_itineraries() -> List[Dict]:
         List of all itinerary dictionaries, sorted by creation date (newest first)
     """
     data = _load_data()
-    # Sort by created_at, newest first
     return sorted(data, key=lambda x: x.get('created_at', ''), reverse=True)
 
 
@@ -117,7 +115,7 @@ def delete_itinerary(itinerary_id: int) -> bool:
     data = _load_data()
     original_length = len(data)
     
-    # Filter out the itinerary with matching ID
+    # To filter out the itinerary with matching ID
     data = [item for item in data if item.get('id') != itinerary_id]
     
     if len(data) < original_length:
