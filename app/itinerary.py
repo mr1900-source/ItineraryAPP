@@ -1,8 +1,5 @@
-"""Functions to interact with the Gemini API to generate itineraries.
-
-This module loads GEMINI_API_KEY from environment variables (use a .env file
-during development). It exposes `generate_itinerary(prompt: str) -> str`.
-
+"""This file contains the functions to interact with the Gemini API to generate itineraries.
+This module loads GEMINI_API_KEY from environment variables.
 The real network call is isolated here so tests can mock it.
 """
 import os
@@ -47,6 +44,7 @@ def _build_messages(user_prompt: str) -> dict:
         "user_content": user_content,
     }
 
+# Used Claude for help with API parameters
 def _call_gemini_api(api_params: dict) -> str:
     """Call the Gemini API and return the model's text response."""
     if not GEMINI_API_KEY:
@@ -60,7 +58,7 @@ def _call_gemini_api(api_params: dict) -> str:
     config = types.GenerateContentConfig(
         system_instruction=api_params["system_instruction"],
         max_output_tokens=2000,
-        temperature=0.8,  # Increased for more creativity
+        temperature=0.8,  
     )
 
     try:
@@ -72,7 +70,6 @@ def _call_gemini_api(api_params: dict) -> str:
         return response.text.strip()
     except Exception as e:
         raise ItineraryError(f"Gemini API call failed: {e}") from e
-
 
 def generate_itinerary(user_prompt: str) -> str:
     """Public function: given a natural-language prompt return itinerary text."""

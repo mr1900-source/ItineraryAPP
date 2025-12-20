@@ -8,7 +8,7 @@ import json
 import os
 from app import storage
 
-
+# Used inspiration from Claude to create a temp direct and test file path
 @pytest.fixture
 def temp_storage(tmp_path, monkeypatch):
     """Create a temporary storage file for testing."""
@@ -16,7 +16,7 @@ def temp_storage(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, 'STORAGE_FILE', str(test_file))
     return str(test_file)
 
-
+# Tests correct saving of data
 def test_save_itinerary(temp_storage):
     """Test saving a new itinerary."""
     title = "Paris Weekend"
@@ -31,12 +31,10 @@ def test_save_itinerary(temp_storage):
     assert result['itinerary'] == itinerary_text
     assert 'created_at' in result
 
-
 def test_load_all_itineraries_empty(temp_storage):
     """Test loading when no itineraries exist."""
     result = storage.load_all_itineraries()
     assert result == []
-
 
 def test_load_all_itineraries(temp_storage):
     """Test loading multiple itineraries."""
@@ -49,7 +47,6 @@ def test_load_all_itineraries(temp_storage):
     assert result[0]['title'] == "Trip 2"  # Newest first
     assert result[1]['title'] == "Trip 1"
 
-
 def test_get_itinerary_by_id(temp_storage):
     """Test retrieving a specific itinerary."""
     saved = storage.save_itinerary("Test Trip", "test prompt", "test itinerary")
@@ -60,12 +57,10 @@ def test_get_itinerary_by_id(temp_storage):
     assert result is not None
     assert result['title'] == "Test Trip"
 
-
 def test_get_itinerary_by_id_not_found(temp_storage):
     """Test retrieving non-existent itinerary."""
     result = storage.get_itinerary_by_id(999)
     assert result is None
-
 
 def test_delete_itinerary(temp_storage):
     """Test deleting an itinerary."""
@@ -75,16 +70,13 @@ def test_delete_itinerary(temp_storage):
     result = storage.delete_itinerary(itinerary_id)
     assert result is True
     
-    # Verify it's deleted
     retrieved = storage.get_itinerary_by_id(itinerary_id)
     assert retrieved is None
-
 
 def test_delete_itinerary_not_found(temp_storage):
     """Test deleting non-existent itinerary."""
     result = storage.delete_itinerary(999)
     assert result is False
-
 
 def test_save_multiple_itineraries_increments_id(temp_storage):
     """Test that IDs increment properly."""
@@ -95,14 +87,3 @@ def test_save_multiple_itineraries_increments_id(temp_storage):
     assert first['id'] == 1
     assert second['id'] == 2
     assert third['id'] == 3
-
-
-def test_storage_persists(temp_storage):
-    """Test that data persists across function calls."""
-    storage.save_itinerary("Test", "prompt", "itinerary")
-    
-    # Load in a "new session"
-    result = storage.load_all_itineraries()
-    
-    assert len(result) == 1
-    assert result[0]['title'] == "Test"

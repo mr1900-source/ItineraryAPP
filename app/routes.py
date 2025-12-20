@@ -1,4 +1,4 @@
-"""HTTP routes for the TripCraft itinerary app."""
+"""HTTP routes for the QuickTrip itinerary app."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from .itinerary import generate_itinerary, ItineraryError
 from .storage import (
@@ -12,13 +12,13 @@ from .storage import (
 
 main_bp = Blueprint('main', __name__, template_folder='templates')
 
-
+# Displays home page
 @main_bp.route('/', methods=['GET'])
 def index():
     """Display the main page with itinerary generation form."""
     return render_template('index.html')
 
-
+# Generates new AI itinerary from user input, used inspiration from Claude  for help
 @main_bp.route('/plan', methods=['POST'])
 def plan():
     """Generate an itinerary based on user prompt."""
@@ -36,7 +36,7 @@ def plan():
 
     return render_template('index.html', prompt=prompt, itinerary=itinerary_text)
 
-
+# Display's user's manually edited itinerary
 @main_bp.route('/modify', methods=['POST'])
 def modify():
     """Display modified itinerary after user edits."""
@@ -50,7 +50,7 @@ def modify():
     flash('Itinerary modified! You can save it below.', 'success')
     return render_template('index.html', prompt=prompt, itinerary=modified_itinerary)
 
-
+# Saves an itinerary to JSON storage, used help from Claude
 @main_bp.route('/save', methods=['POST'])
 def save():
     """Save a generated itinerary."""
@@ -74,7 +74,7 @@ def save():
     
     return redirect(url_for('main.saved'))
 
-
+# Shows all saved itineraries
 @main_bp.route('/saved', methods=['GET'])
 def saved():
     """Display all saved itineraries."""
@@ -86,7 +86,7 @@ def saved():
     
     return render_template('saved.html', itineraries=itineraries)
 
-
+# Displays full details of one itinerary after user selects
 @main_bp.route('/view/<int:itinerary_id>', methods=['GET'])
 def view(itinerary_id):
     """View a specific saved itinerary."""
@@ -101,7 +101,7 @@ def view(itinerary_id):
         flash(f'Error loading itinerary: {e}', 'danger')
         return redirect(url_for('main.saved'))
 
-
+# Permenantly deletes a saved itinerary
 @main_bp.route('/delete/<int:itinerary_id>', methods=['POST'])
 def delete(itinerary_id):
     """Delete a saved itinerary."""
@@ -115,7 +115,7 @@ def delete(itinerary_id):
     
     return redirect(url_for('main.saved'))
 
-
+# Creates a brand new itinerary using the saved prompt in JSON
 @main_bp.route('/regenerate/<int:itinerary_id>', methods=['POST'])
 def regenerate(itinerary_id):
     """Regenerate an itinerary from a saved prompt."""

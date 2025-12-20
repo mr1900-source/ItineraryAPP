@@ -2,6 +2,7 @@
 {% set active_page = "saved" %}
 
 {% block content %}
+<!--Used Claude Code for Inspiration-->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="display-6 fw-bold mb-0">{{ itinerary_data.title }}</h1>
@@ -111,7 +112,6 @@
                     result += "STOP: " + content + "\n\n";
                 }
             });
-            // Also include extra tips if present
             const extraTips = document.querySelector('.extra-tips-card');
             if (extraTips) {
                 const tipsContent = extraTips.querySelector('.card-body div').innerText.trim();
